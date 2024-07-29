@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace Person_tz
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e) // Кнопка добавления person
         {
             AddPerson add = new AddPerson();
             add.ShowDialog();
@@ -39,13 +40,13 @@ namespace Person_tz
 
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button2_Click(object sender, EventArgs e) // Кнопка изменения person
         {
             EditPerson edit = new EditPerson();
             edit.ShowDialog();
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void button4_Click(object sender, EventArgs e) // Кнопка сохранение в файл
         {
             if (dataGridView1.SelectedRows.Count > 0)
             {
@@ -113,6 +114,50 @@ namespace Person_tz
             catch (Exception ex)
             {
                 MessageBox.Show($"Произошла ошибка при сохранении файла: {ex.Message}", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e) //Кнопка Удаления
+        {
+            if (dataGridView1.SelectedRows.Count > 0)
+            {
+                // Получить выбранную строку
+                var selectedRow = dataGridView1.SelectedRows[0];
+                string recordId = selectedRow.Cells["idDataGridViewTextBoxColumn"].Value.ToString();
+
+
+                // Подтверждение удаления
+                var confirmResult = MessageBox.Show("Вы уверены, что хотите удалить эту запись?",
+                                                     "Подтверждение удаления",
+                                                     MessageBoxButtons.YesNo);
+                if (confirmResult == DialogResult.Yes)
+                {
+                    // Удалить запись из базы данных
+                    DeleteRecordFromDatabase(recordId);
+
+                    // Удалить строку из DataGridView
+                    dataGridView1.Rows.Remove(selectedRow);
+
+                    MessageBox.Show("Запись успешно удалена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Выберите запись для удаления.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private void DeleteRecordFromDatabase(string recordId)
+        {
+            string connectionString = (@"Data Source=HOME-PC\DB_FOR_PERSON;Initial Catalog=person1;Integrated Security=True");
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlCommand command = new SqlCommand("DELETE FROM personBase WHERE Id = @Id", connection))
+                {
+                    command.Parameters.Add("@Id", SqlDbType.Int).Value = recordId;
+                    command.ExecuteNonQuery();
+                }
             }
         }
     }
